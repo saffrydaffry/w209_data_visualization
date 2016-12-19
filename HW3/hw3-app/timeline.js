@@ -1,7 +1,7 @@
 /**
  * Created by Safyre on 12/18/16.
  */
-import "d3";
+// no need for import since d3 is imported in .html
 
 /*boiler plate variable set up */
 // chart object container properties
@@ -24,8 +24,11 @@ var line = d3.line()
     .x(function(d) { return x(d.date); })
     .y(function(d) { return y(d.count); });
 
+/* rename columns */
+var keymap = {"caught": "pokemon", "stops": "pokestops", "num_items": "items"};
+
 /* load data and call plot*/
-d3.csv("data.csv", function(data) {
+d3.csv("data.csv", type ,function(data) {
     /* data.forEach(function(d){
      d.date = parseDate(d.date);
      d.caught = +d.caught;
@@ -39,12 +42,11 @@ d3.csv("data.csv", function(data) {
         return {
             id: id,
             values: data.map(function (d) {
-                return {date: parseDate(d.date), count: d[id]};
+
+                return {date: d.date, count: d[id]};
             })
         }
     });
-
-    dataset.forEach(function(d){console.log(d[0])});
 
     /* Set ranges for each dimension */
     x.domain(d3.extent(data, function(d) { return d.date; }));
@@ -52,12 +54,11 @@ d3.csv("data.csv", function(data) {
         d3.min(dataset, function(c) { return d3.min(c.values, function(d) { return d.count; }); }),
         d3.max(dataset, function(c) { return d3.max(c.values, function(d) { return d.count; }); })
     ]);
-
     z.domain(dataset.map(function(c) { return c.id; }));
 
-    //z.domain(['number of pokemon', 'number of stops', 'number of items']);
-
-    /* Add x and y axes to graph "g" */
+    /* Add x and y axes to graph "g"
+    axis---x declared within styles tag
+    * */
     g.append("g")
         .attr("class", "axis axis--x")
         .attr("transform", "translate(0," + height + ")")
@@ -69,12 +70,13 @@ d3.csv("data.csv", function(data) {
         .append("text")
         .attr("transform", "rotate(-90)")
         .attr("y", 6)
-        .attr("dy", "0.71em")
+        .attr("dy", "-3em")
         .attr("fill", "#000")
-        .text("Total");
+        .text("Counts per Day");
 
+    // call the data
     var datasets = g.selectAll(".datasets")
-        .data(data)
+        .data(dataset)
         .enter().append("g")
         .attr("class", "datasets");
 
@@ -83,16 +85,22 @@ d3.csv("data.csv", function(data) {
         .attr("d", function(d) { return line(d.values); })
         .style("stroke", function(d) { return z(d.id); });
 
-    /*
+    // labels for each line
      datasets.append("text")
      .datum(function(d) { return {id: d.id, value: d.values[d.values.length - 1]}; })
-     .attr("transform", function(d) { return "translate(" + x(d.value.date) + "," + y(d.count) + ")"; })
+     .attr("transform", function(d) { return "translate(" + x(d.value.date) + "," + y(d.value.count) + ")"; })
      .attr("x", 3)
      .attr("dy", "0.35em")
-     .style("font", "10px sans-serif")
-     .text(function(d) { return d.id; });
-     */
+     .style("font", "12px Lato")
+     .text(function(d) { return keymap[d.id]; });
 
 
 
 });
+
+// create variable d that returns the x-axis text
+function type(d, _, columns) {
+    d.date = parseDate(d.date);
+    for (var i = 1, n = columns.length, c; i < n; ++i) d[c = columns[i]] = +d[c];
+    return d;
+}
